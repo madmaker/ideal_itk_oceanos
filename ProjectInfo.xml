@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+@<COPYRIGHT>@
+==================================================
+Copyright 2011.
+Siemens Product Lifecycle Management Software Inc.
+All Rights Reserved.
+==================================================
+@<COPYRIGHT>@
+--><ProjectInfo>
+    <NameValue key="ProjectBackup.Database.TEMDeploy" value="true"/>
+    <NameValue key="ExternalBuild.CompileCommand.hpux" value="aCC"/>
+    <NameValue key="ExternalBuild.CompilerFlags.linux" value="-c -fPIC -m64"/>
+    <NameValue key="ExternalBuild.LinkCommand.win32" value="link"/>
+    <NameValue key="Codegen.Deprecation.NumberOfReleases" value="2"/>
+    <NameValue key="Codegen.Deprecation.policy" value="true"/>
+    <NameValue key="ExternalBuild.LinkerFlags.win32" value="-dll -debug -nologo -nodefaultlib -incremental\:no -subsystem\:console -dynamicbase -nxcompat"/>
+    <NameValue key="ExternalBuild.CompileCommand.win64" value="cl"/>
+    <NameValue key="ExternalBuild.LinkerFlags.linux" value="-shared"/>
+    <NameValue key="SoaExternalBuild.NETWebtierFeatureUuid" value="cbee687f8a1e4682ad47b34dbb82db75"/>
+    <NameValue key="ExternalBuild.LinkerFlags.hpux" value="-b +DA2.0N -AA -mt"/>
+    <NameValue key="ExternalBuild.CompilerFlags.aix" value="-c -qprocimported -qdataimported -qcpluscmt -qrtti-qmaxmem=-1 -qnolm -qnoansialias -qchars=signed -qtbtable=full -qnoro"/>
+    <NameValue key="ExternalBuild.LinkCommand.macos" value="g++"/>
+    <NameValue key="ExternalBuild.LinkerFlags.macos" value="-dynamiclib -Wl,-undefined,error -arch x86_64 -headerpad_max_install_names"/>
+    <NameValue key="ExternalBuild.CompilerFlags.win64" value="-MD -c -nologo -EHsc %TC_INCLUDE%/msvcpragmas.h -DSTEP -DAP203 -DAP214 -DWIN32_LEAN_AND_MEAN -DWNT -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SECURE_SCL\=0 -D_HAS_TR1\=0 -DWNT -D_WIN32 -DWIN32 -D_WIN64 -D_INTEL\=1 -DCRTAPI1\=_cdecl -DCRTAPI2\=cdecl -W3"/>
+    <NameValue key="ExternalBuild.CompileCommand.win32" value="cl"/>
+    <NameValue key="Codegen.Namespace" value="m9_prop_lib_idealplm"/>
+    <NameValue key="ProjectBackup.LocalFileSystem.BackupReminder" value="10"/>
+    <NameValue key="Codegen.SrcDir" value="src"/>
+    <NameValue key="ExternalBuild.LinkCommand.aix" value="xlC_r"/>
+    <NameValue key="ExternalBuild.CompilerFlags.solaris" value="-c -KPIC -DUNX -DSUN -D_SOLARIS_SOURCE -mt -xtarget=ultra3 -xarch=v8plusa"/>
+    <NameValue key="ProjectBackup.LocalFileSystem.EnableBackup" value="true"/>
+    <NameValue key="ExternalBuild.CompileCommand.aix" value="xlC_r"/>
+    <NameValue key="ExternalBuild.CompileCommand.linux" value="g++"/>
+    <NameValue key="ExternalBuild.LinkCommand.solaris" value="CC"/>
+    <NameValue key="ExternalBuild.CompilerFlags.macos" value="-c -fPIC -fno-common -arch x86_64"/>
+    <NameValue key="ProjectBackup.Common.IncludeOutputFldr" value="false"/>
+    <NameValue key="ExternalBuild.CompileCommand.solaris" value="CC"/>
+    <NameValue key="ProjectBackup.Database.EnableBackup" value="true"/>
+    <NameValue key="ExternalBuild.CompilerFlags.hpux" value="-c +Z +DA2.0N -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 +We890 +We129+W740,749,829 -z -AA -mt"/>
+    <NameValue key="ExternalBuild.LinkCommand.linux" value="g++"/>
+    <NameValue key="ExternalBuild.LinkerFlags.solaris" value="-dy -G -Qoption ld -t -xtarget=ultra3 -xarch=v8plusa"/>
+    <NameValue key="Codegen.Copyright" value="&#10;Copyright $CURRENT_YEAR.&#10;Siemens Product Lifecycle Management Software Inc.&#10;All Rights Reserved.&#10;"/>
+    <NameValue key="ExternalBuild.LinkerFlags.aix" value="-G -berok -bbigtoc -bh:5 -bnoentry -qpriority=1"/>
+    <NameValue key="ExternalBuild.LinkCommand.hpux" value="aCC"/>
+    <NameValue key="ExternalBuild.LinkCommand.win64" value="link"/>
+    <NameValue key="ProjectBackup.Database.LiveDeploy" value="true"/>
+    <NameValue key="ExternalBuild.LinkerFlags.win64" value="-dll -debug -nologo -nodefaultlib -incremental\:no -subsystem\:console -dynamicbase -nxcompat"/>
+    <NameValue key="ExternalBuild.CompileCommand.macos" value="g++"/>
+    <NameValue key="ExternalBuild.CompilerFlags.win32" value="-MD -c -nologo -EHsc %TC_INCLUDE%/msvcpragmas.h -DSTEP -DAP203 -DAP214 -DWIN32_LEAN_AND_MEAN -DWNT -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_SECURE_SCL=0 -D_HAS_TR1=0 -DWNT -D_WIN32 -DWIN32 -D_INTEL=1 -DCRTAPI1=_cdecl -DCRTAPI2=cdecl -W3"/>
+</ProjectInfo>

@@ -1,0 +1,10 @@
+<project name="ctt_custom_idealplm" default="all" basedir=".">
+	<target name="all" depends="buildx64"/>
+	<target name="buildx64">
+		<exec failonerror="true" executable="cmd.exe">
+			<arg line="/c"/>
+			<arg line="build.cmd"/>
+			<arg line="x64"/>
+		</exec>
+	</target>
+</project>
