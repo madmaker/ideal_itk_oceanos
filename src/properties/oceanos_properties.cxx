@@ -10,7 +10,7 @@
 #include "oc9_get_document_type_value.hxx"
 #include "oc9_get_MaterialSEPart1_value.hxx"
 #include "oc9_get_MaterialSEPart2_value.hxx"
-//#include "oc9_get_TypeOfPart_EN.hxx"
+#include "oc9_get_TypeOfPart_EN.hxx"
 
 /**
  *
@@ -35,8 +35,8 @@ int oceanos_custom_idealplm_register_properties(int * decision, va_list args) {
 		erc = METHOD_register_prop_method("Oc9_KDRevision", "oc9_MaterialSEPart2",
 				PROP_ask_value_string_msg, oc9_get_MaterialSEPart2_value, NULL, &meth);
 
-		/*erc = METHOD_register_prop_method("Part", "oc9_TypeOfPart_EN",
-				PROP_ask_value_string_msg, oc9_get_typeOfPart_en, NULL, &meth);*/
+		erc = METHOD_register_prop_method("Part", "oc9_TypeOfPart_EN",
+				PROP_ask_value_string_msg, oc9_get_TypeOfPart_EN, NULL, &meth);
 
 
 	} catch (...) {
