@@ -129,6 +129,7 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 				Oc9_CompanyPart_type_t = NULLTAG,
 				Oc9_KD_type_t = NULLTAG,
 				dataset_type_t = NULLTAG,
+				iman_file_type_t = NULLTAG,
 				IMAN_specification_rel_type_t = NULLTAG,
 				IMAN_Rendering_rel_type_t = NULLTAG,
 				*related_objs,
@@ -141,7 +142,8 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 				is_Oc8_ClassESKD_type,
 				is_Oc9_CompanyPartType,
 				is_Oc9_KDType,
-				is_DatasetType;
+				is_DatasetType,
+				is_ImanFileType;
 			char *oc8_Type = NULL,
 				*first_item_id = NULL,
 				**entryNames,
@@ -182,6 +184,12 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 			erc = GRM_find_relation_type("IMAN_Rendering", &IMAN_Rendering_rel_type_t);
 			if(IMAN_Rendering_rel_type_t==NULLTAG){
 				printf("Cannot find type IMAN_Rendering");
+				return ITK_ok;
+			}
+
+			erc = TCTYPE_find_type("ImanFile", NULL, &iman_file_type_t);
+			if(dataset_type_t==NULLTAG){
+				printf("Cannot find type dataset");
 				return ITK_ok;
 			}
 
@@ -327,26 +335,30 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 									char* name;
 									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
 									for(int j = 0; j < namedrefs_count; j++){
-										erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-										printf("Found name = %s\n", name);
-										char* extension = getExtension(name);
-										char* newName;
-										if(extension!=NULL){
-											newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
-											strcpy(newName, item_id);
-											strcat(newName, extension);
-											MEM_free(extension);
-										} else {
-											newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
-											strcpy(newName, item_id);
+										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
+										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
+										if(is_ImanFileType){
+											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
+											printf("Found name = %s\n", name);
+											char* extension = getExtension(name);
+											char* newName;
+											if(extension!=NULL){
+												newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
+												strcpy(newName, item_id);
+												strcat(newName, extension);
+												MEM_free(extension);
+											} else {
+												newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
+												strcpy(newName, item_id);
+											}
+											erc = AOM_refresh(namedrefs[j], TRUE);
+											erc = IMF_set_original_file_name(namedrefs[j], newName);
+											erc = AOM_save(namedrefs[j]);
+											erc = AOM_refresh(namedrefs[j], FALSE);
+											printf("Set name = %s\n", newName);
+											MEM_free(name);
+											MEM_free(newName);
 										}
-										erc = AOM_refresh(namedrefs[j], TRUE);
-										erc = IMF_set_original_file_name(namedrefs[j], newName);
-										erc = AOM_save(namedrefs[j]);
-										erc = AOM_refresh(namedrefs[j], FALSE);
-										printf("Set name = %s\n", newName);
-										MEM_free(name);
-										MEM_free(newName);
 									}
 									MEM_free(item_id);
 									if(namedrefs_count>0){
@@ -371,26 +383,30 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 									char* name;
 									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
 									for(int j = 0; j < namedrefs_count; j++){
-										erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-										printf("Found name = %s\n", name);
-										char* extension = getExtension(name);
-										char* newName;
-										if(extension!=NULL){
-											newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
-											strcpy(newName, item_id);
-											strcat(newName, extension);
-											MEM_free(extension);
-										} else {
-											newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
-											strcpy(newName, item_id);
+										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
+										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
+										if(is_ImanFileType){
+											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
+											printf("Found name = %s\n", name);
+											char* extension = getExtension(name);
+											char* newName;
+											if(extension!=NULL){
+												newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
+												strcpy(newName, item_id);
+												strcat(newName, extension);
+												MEM_free(extension);
+											} else {
+												newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
+												strcpy(newName, item_id);
+											}
+											erc = AOM_refresh(namedrefs[j], TRUE);
+											erc = IMF_set_original_file_name(namedrefs[j], newName);
+											erc = AOM_save(namedrefs[j]);
+											erc = AOM_refresh(namedrefs[j], FALSE);
+											printf("Set name = %s\n", newName);
+											MEM_free(name);
+											MEM_free(newName);
 										}
-										erc = AOM_refresh(namedrefs[j], TRUE);
-										erc = IMF_set_original_file_name(namedrefs[j], newName);
-										erc = AOM_save(namedrefs[j]);
-										erc = AOM_refresh(namedrefs[j], FALSE);
-										printf("Set name = %s\n", newName);
-										MEM_free(name);
-										MEM_free(newName);
 									}
 									MEM_free(item_id);
 									if(namedrefs_count>0){
