@@ -118,6 +118,16 @@ char* getExtension(char* name){
 	return result;
 }
 
+bool isRenamableDatasetType(char* typeName){
+	printf("checking dataset type: %s\n", typeName);
+	char *datasetTypesNotToRename[] = {"SE Part", "SE SheetMetal", "SE Weldment", "SE Assembly"};
+	for(int i = 0; i < sizeof(datasetTypesNotToRename) / sizeof (char*); i++){
+		if(strcmp(typeName, datasetTypesNotToRename[i])==0)
+			return false;
+	}
+	return true;
+}
+
 int oc9_assignDesignation(EPM_action_message_t msg){
 	try {
 			printf("%s\n", "+into oc9_assignDesignation");
@@ -152,7 +162,8 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 				**item_ids,
 				*temp_item_id,
 				*newIndex= NULL,
-				*temp_type_s = NULL;
+				*temp_type_s = NULL,
+				*temp_type_name;
 			ResultCheck erc;
 			auto_itk_mem_free<tag_t> results_found;
 
@@ -312,13 +323,16 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 							printf("%s\n", ".comparing types");
 							erc = TCTYPE_ask_parent_type(temp_type_t, &parent_temp_type_t);
 							erc = TCTYPE_is_type_of(dataset_type_t, parent_temp_type_t, &is_DatasetType);
+							erc = TCTYPE_ask_name(temp_type_t, temp_type_name);
 							if(is_DatasetType){
 								printf("%s\n", ".is Dataset type");
 								char* item_id;
 								int count;
 								tag_t* primary_objects;
 								erc = GRM_list_primary_objects_only(attachments[i], IMAN_specification_rel_type_t, &count, &primary_objects);
+								printf("%s\n", ".done looking for specification");
 								if(count>0){
+									printf("%s\n", ".count>0");
 									erc = AOM_ask_value_string(primary_objects[0], "item_id", &item_id);
 									//printf("%s\n", ".locking");
 									//erc = AOM_refresh(attachments[i], TRUE);
@@ -329,44 +343,48 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 									//printf("%s\n", ".unlocking");
 									//erc = AOM_refresh(attachments[i], FALSE);
 									MEM_free(primary_objects);
-									printf("%s\n", "Working with a dataset...");
-									int namedrefs_count = 0;
-									tag_t* namedrefs;
-									char* name;
-									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
-									for(int j = 0; j < namedrefs_count; j++){
-										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
-										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
-										if(is_ImanFileType){
-											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-											printf("Found name = %s\n", name);
-											char* extension = getExtension(name);
-											char* newName;
-											if(extension!=NULL){
-												newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
-												strcpy(newName, item_id);
-												strcat(newName, extension);
-												MEM_free(extension);
-											} else {
-												newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
-												strcpy(newName, item_id);
+									if(isRenamableDatasetType(temp_type_name)){
+										printf("%s %s\n", "Working with a dataset... of type ", temp_type_name);
+										int namedrefs_count = 0;
+										tag_t* namedrefs;
+										char* name;
+										erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
+										for(int j = 0; j < namedrefs_count; j++){
+											erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
+											erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
+											if(is_ImanFileType){
+												erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
+												printf("Found name = %s\n", name);
+												char* extension = getExtension(name);
+												char* newName;
+												if(extension!=NULL){
+													newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
+													strcpy(newName, item_id);
+													strcat(newName, extension);
+													MEM_free(extension);
+												} else {
+													newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
+													strcpy(newName, item_id);
+												}
+												erc = AOM_refresh(namedrefs[j], TRUE);
+												erc = IMF_set_original_file_name(namedrefs[j], newName);
+												erc = AOM_save(namedrefs[j]);
+												erc = AOM_refresh(namedrefs[j], FALSE);
+												printf("Set name = %s\n", newName);
+												MEM_free(name);
+												MEM_free(newName);
 											}
-											erc = AOM_refresh(namedrefs[j], TRUE);
-											erc = IMF_set_original_file_name(namedrefs[j], newName);
-											erc = AOM_save(namedrefs[j]);
-											erc = AOM_refresh(namedrefs[j], FALSE);
-											printf("Set name = %s\n", newName);
-											MEM_free(name);
-											MEM_free(newName);
+										}
+										if(namedrefs_count>0){
+											MEM_free(namedrefs);
 										}
 									}
 									MEM_free(item_id);
-									if(namedrefs_count>0){
-										MEM_free(namedrefs);
-									}
 								}
 								erc = GRM_list_primary_objects_only(attachments[i], IMAN_Rendering_rel_type_t, &count, &primary_objects);
+								printf("%s\n", ".done looking for rendering");
 								if(count>0){
+									printf("%s\n", ".count>0");
 									erc = AOM_ask_value_string(primary_objects[0], "item_id", &item_id);
 									//printf("%s\n", ".locking");
 									//erc = AOM_refresh(attachments[i], TRUE);
@@ -377,41 +395,43 @@ int oc9_assignDesignation(EPM_action_message_t msg){
 									//printf("%s\n", ".unlocking");
 									//erc = AOM_refresh(attachments[i], FALSE);
 									MEM_free(primary_objects);
-									printf("%s\n", "Working with a dataset...");
-									int namedrefs_count = 0;
-									tag_t* namedrefs;
-									char* name;
-									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
-									for(int j = 0; j < namedrefs_count; j++){
-										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
-										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
-										if(is_ImanFileType){
-											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-											printf("Found name = %s\n", name);
-											char* extension = getExtension(name);
-											char* newName;
-											if(extension!=NULL){
-												newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
-												strcpy(newName, item_id);
-												strcat(newName, extension);
-												MEM_free(extension);
-											} else {
-												newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
-												strcpy(newName, item_id);
+									if(isRenamableDatasetType(temp_type_s)){
+										printf("%s\n", "Working with a dataset...");
+										int namedrefs_count = 0;
+										tag_t* namedrefs;
+										char* name;
+										erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
+										for(int j = 0; j < namedrefs_count; j++){
+											erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
+											erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
+											if(is_ImanFileType){
+												erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
+												printf("Found name = %s\n", name);
+												char* extension = getExtension(name);
+												char* newName;
+												if(extension!=NULL){
+													newName = (char*) MEM_alloc((strlen(item_id)+strlen(extension))*sizeof(char) + 1);
+													strcpy(newName, item_id);
+													strcat(newName, extension);
+													MEM_free(extension);
+												} else {
+													newName = (char*) MEM_alloc(strlen(item_id)*sizeof(char) + 1);
+													strcpy(newName, item_id);
+												}
+												erc = AOM_refresh(namedrefs[j], TRUE);
+												erc = IMF_set_original_file_name(namedrefs[j], newName);
+												erc = AOM_save(namedrefs[j]);
+												erc = AOM_refresh(namedrefs[j], FALSE);
+												printf("Set name = %s\n", newName);
+												MEM_free(name);
+												MEM_free(newName);
 											}
-											erc = AOM_refresh(namedrefs[j], TRUE);
-											erc = IMF_set_original_file_name(namedrefs[j], newName);
-											erc = AOM_save(namedrefs[j]);
-											erc = AOM_refresh(namedrefs[j], FALSE);
-											printf("Set name = %s\n", newName);
-											MEM_free(name);
-											MEM_free(newName);
+										}
+										if(namedrefs_count>0){
+											MEM_free(namedrefs);
 										}
 									}
 									MEM_free(item_id);
-									if(namedrefs_count>0){
-										MEM_free(namedrefs);
-									}
 								}
 							}
 						}
