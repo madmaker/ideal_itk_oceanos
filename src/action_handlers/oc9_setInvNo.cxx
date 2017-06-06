@@ -17,7 +17,7 @@
 
 int oc9_setInvNo(EPM_action_message_t msg) {
 	try {
-		printf("%s\n", "+into oc9_setInvNo");
+		TC_write_syslog("%s\n", "-Into- oc9_setInvNo");
 		tag_t *attachments, root_task, temp_type_t, *related_objs, query_t = NULL_TAG;
 		int *attachments_types,
 			attachments_count = 0,
@@ -34,14 +34,12 @@ int oc9_setInvNo(EPM_action_message_t msg) {
 
 		erc = EPM_ask_root_task(msg.task, &root_task);
 		erc = EPM_ask_all_attachments(root_task, &attachments_count, &attachments, &attachments_types);
-		printf("attachments count=%d\n", attachments_count);
+		TC_write_syslog("attachments count=%d\n", attachments_count);
 		erc = QRY_find("IdealPLM_FindInvNos", &query_t);
 		if (query_t != NULL_TAG) {
-			printf("%s\n", "Found query IdealPLM_FindInvNos");
 			for (i = 0; i < attachments_count; i++) {
 				if (attachments_types[i] == EPM_target_attachment) {
 					erc = AOM_ask_value_int(attachments[i], "oc9_InvNo", &oc9_InvNo);
-					printf("InvNo=%d\n", oc9_InvNo);
 					if (oc9_InvNo == 0 ) {
 						erc = QRY_execute(query_t, entryCount, NULL, NULL, &resultCount, results_found.operator tag_t **());
 						if (resultCount != 0) {
@@ -51,22 +49,16 @@ int oc9_setInvNo(EPM_action_message_t msg) {
 							for(j = 0; j < resultCount; j++){
 								found_item = results_found.operator tag_t *()[j];
 								erc = AOM_ask_value_int(found_item, "oc9_InvNo", &invNo);
-								printf("Found InvNo=%d\n", oc9_InvNo);
+								TC_write_syslog("Found InvNo=%d\n", oc9_InvNo);
 								invNos[j] = invNo;
 							}
-							printf("%s\n", "------------");
 							qsort(invNos, resultCount, sizeof(int), cmpfunc);
-							for (j = 0; j < resultCount; j++) {
-								printf("%d\n", invNos[j]);
-							}
-							printf("%s\n", "------------");
-							printf("%s\n", "results>0");
+							TC_write_syslog("%s\n", "results>0");
 						} else {
-							printf("%s\n", "results=0");
+							TC_write_syslog("%s\n", "results=0");
 						}
 						while(!valueIsSet){
 							if (isvalueinarray(currentNo, invNos, resultCount)) {
-								printf("%s\n", "Already have this InvNo =(");
 								currentNo++;
 								continue;
 							} else {
@@ -85,7 +77,7 @@ int oc9_setInvNo(EPM_action_message_t msg) {
 				valueIsSet = false;
 			}
 		} else {
-			printf("%s\n", "Query IdealPLM_FindInvNos NOT FOUND!");
+			TC_write_syslog("%s\n", "ERROR: Failed to find IdealPLM_FindInvNos query");
 		}
 
 		MEM_free(attachments);

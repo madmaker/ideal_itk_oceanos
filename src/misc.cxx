@@ -19,24 +19,20 @@ void appendToResult(char* base_string, char* prefix, char* to_append, int max_re
 }
 
 char* getId(char* input){
-	printf("---into getId");
-	TC_write_syslog("---into getID\n");
+	TC_write_syslog("-into getID\n");
 	TC_write_syslog(input);
 	char* result = NULL;
 	if(input!=NULL){
 		size_t length = strcspn(input, " -");
 		if(length>0){
-			printf("----length>0\n");
 			TC_write_syslog("length>0\n");
 			result = (char*) MEM_alloc(length * sizeof(char) + 1);
 			strncpy(result, input, length);
 			result[length+1] = '\0';
-			TC_write_syslog("result=\n");
-			TC_write_syslog(result);
-			TC_write_syslog("\n");
+			TC_write_syslog("result=%s\n", result);
 		}
 	}
-	TC_write_syslog("---exiting getID\n");
+	TC_write_syslog("-exiting getID\n");
 	return result;
 }
 

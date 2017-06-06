@@ -59,9 +59,7 @@ int oc9_addObjects(EPM_action_message_t msg){
 			if(attachments_count>0){
 				erc = AOM_ask_value_string(attachments[0], "item_id", &temp_item_id);
 				item_id = getId(temp_item_id);
-				TC_write_syslog("Searching for id:\n");
-				TC_write_syslog(item_id);
-				TC_write_syslog("\n");
+				TC_write_syslog("Searching for id: %s\n", item_id);
 				if(item_id!=NULL){
 					MEM_free(temp_item_id);
 					erc = QRY_find("IdealPLM_SearchObjects", &query_t);
@@ -84,7 +82,7 @@ int oc9_addObjects(EPM_action_message_t msg){
 						TC_write_syslog(entryValues[0]);
 						erc = QRY_execute(query_t, entryCount, entryNames, entryValues, &resultCount, &results_found);
 					} else {
-						printf("%s\n", "Not found IdealPLM_SearchObjects");
+						TC_write_syslog("%s\n", "ERROR: Failed to find IdealPLM_SearchObjects query");
 						MEM_free(temp_item_id);
 						return ITK_ok;
 					}

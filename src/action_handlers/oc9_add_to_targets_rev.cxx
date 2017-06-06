@@ -9,6 +9,7 @@
 
 int oc9_add_to_targets_rev(EPM_action_message_t msg) {
 	try {
+		TC_write_syslog("-Into- oc9_add_to_targets_rev\n");
 		tag_t
 			*attachments,
 			root_task,

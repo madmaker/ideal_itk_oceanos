@@ -12,7 +12,6 @@ public:
 			m_t(t) {
 	}
 	virtual ~ auto_itk_mem_free() {
-		printf("-Destructor\n");
 		if (m_t) {
 			MEM_free(m_t);
 			m_t = NULL;
