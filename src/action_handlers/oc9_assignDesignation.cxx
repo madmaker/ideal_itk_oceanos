@@ -123,31 +123,44 @@ bool isRenamableDatasetType(char* typeName) {
 	return true;
 }
 
-void renameDatasets(tag_t attachmentToRenameDatasets, tag_t relationType) {
+void renameDatasetAndNamedRefs(tag_t datasetToRename, tag_t relationType) {
+	TC_write_syslog("Renaming dataset\n");
 	ResultCheck erc;
-	char* item_id;
-	tag_t temp_type_t, iman_file_type_t;
+	char dataset_type_name[TCTYPE_name_size_c+1];
+	char *item_id;
+	tag_t dataset_type_t, namedref_type_t, iman_file_type_t;
 	bool is_ImanFileType;
-	int count;
+	int primary_objects_count = 0;
 	tag_t* primary_objects;
-	erc = GRM_list_primary_objects_only(attachmentToRenameDatasets, relationType, &count, &primary_objects);
-	if (count > 0) {
+
+	erc = TCTYPE_find_type("ImanFile", NULL, &iman_file_type_t);
+	if (iman_file_type_t == NULLTAG) {
+		TC_write_syslog("ERROR: Failed to find type: ImanFile...\n");
+		return;
+	}
+
+	erc = TCTYPE_ask_object_type(datasetToRename, &dataset_type_t);
+	erc = TCTYPE_ask_name(dataset_type_t, dataset_type_name);
+	TC_write_syslog("of type %s\n", dataset_type_name);
+	erc = GRM_list_primary_objects_only(datasetToRename, relationType, &primary_objects_count, &primary_objects);
+	if (primary_objects_count > 0) {
+		TC_write_syslog("Asking for item_id\n");
 		erc = AOM_ask_value_string(primary_objects[0], "item_id", &item_id);
-		erc = AOM_refresh(attachmentToRenameDatasets, TRUE);
-		erc = AOM_set_value_string(attachmentToRenameDatasets, "object_name", item_id);
-		erc = AOM_save(attachmentToRenameDatasets);
-		erc = AOM_refresh(attachmentToRenameDatasets, FALSE);
+		TC_write_syslog("Got: %s\n", item_id);
+		erc = AOM_refresh(datasetToRename, TRUE);
+		erc = AOM_set_value_string(datasetToRename, "object_name", item_id);
+		erc = AOM_save(datasetToRename);
+		erc = AOM_refresh(datasetToRename, FALSE);
 		MEM_free(primary_objects);
-		if (isRenamableDatasetType (temp_type_name)) {
-			TC_write_syslog("%s %s\n", "Working with a dataset... of type ", temp_type_name);
+		if (isRenamableDatasetType (dataset_type_name)) {
+			TC_write_syslog("%s %s\n", "Working with a dataset... of type ", dataset_type_name);
 			int namedrefs_count = 0;
 			tag_t* namedrefs;
 			char* name;
-			erc = AE_ask_dataset_named_refs(attachmentToRenameDatasets, &namedrefs_count, &namedrefs);
-			//TODO
+			erc = AE_ask_dataset_named_refs(datasetToRename, &namedrefs_count, &namedrefs);
 			for (int j = 0; j < namedrefs_count; j++) {
-				erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
-				erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
+				erc = TCTYPE_ask_object_type(namedrefs[j], &namedref_type_t);
+				erc = TCTYPE_is_type_of(iman_file_type_t, namedref_type_t, &is_ImanFileType);
 				if (is_ImanFileType) {
 					erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
 					TC_write_syslog("Found name = %s\n", name);
@@ -162,18 +175,15 @@ void renameDatasets(tag_t attachmentToRenameDatasets, tag_t relationType) {
 						newName = (char*) MEM_alloc(strlen(item_id) * sizeof(char) + 1);
 						strcpy(newName, item_id);
 					}
-					erc = AOM_refresh(namedrefs[j],
-					TRUE);
+					erc = AOM_refresh(namedrefs[j], TRUE);
 					erc = IMF_set_original_file_name(namedrefs[j], newName);
 					erc = AOM_save(namedrefs[j]);
-					erc = AOM_refresh(namedrefs[j],
-					FALSE);
+					erc = AOM_refresh(namedrefs[j],	FALSE);
 					TC_write_syslog("Set name = %s\n", newName);
 					MEM_free(name);
 					MEM_free(newName);
 				}
 			}
-			//TODO
 			if (namedrefs_count > 0) {
 				MEM_free(namedrefs);
 			}
@@ -190,7 +200,7 @@ int oc9_assignDesignation(EPM_action_message_t msg) {
 		int *attachments_types, attachments_count = 0, resultCount = 0;
 		const int entryCount = 1;
 		bool valueIsSet = false, is_Oc8_ClassESKD_type, is_Oc9_CompanyPartType, is_Oc9_KDType, is_DatasetType, is_ImanFileType;
-		char *oc8_Type = NULL, *first_item_id = NULL, **entryNames, **entryValues, *entry_value, **item_ids, *temp_item_id, *newIndex = NULL, *temp_type_s = NULL, *temp_type_name;
+		char *oc8_Type = NULL, *first_item_id = NULL, **entryNames, **entryValues, *entry_value, **item_ids, *temp_item_id, *newIndex = NULL, *temp_type_s = NULL;
 		ResultCheck erc;
 		auto_itk_mem_free<tag_t> results_found;
 
@@ -222,12 +232,6 @@ int oc9_assignDesignation(EPM_action_message_t msg) {
 		erc = GRM_find_relation_type("IMAN_Rendering", &IMAN_Rendering_rel_type_t);
 		if (IMAN_Rendering_rel_type_t == NULLTAG) {
 			TC_write_syslog("ERROR: Failed to find type: IMAN_Rendering...\n");
-			return ITK_ok;
-		}
-
-		erc = TCTYPE_find_type("ImanFile", NULL, &iman_file_type_t);
-		if (dataset_type_t == NULLTAG) {
-			TC_write_syslog("ERROR: Failed to find type: ImanFile...\n");
 			return ITK_ok;
 		}
 
@@ -328,113 +332,19 @@ int oc9_assignDesignation(EPM_action_message_t msg) {
 				// TODO From here
 				for (int i = 0; i < attachments_count; i++) {
 					if (attachments_types[i] == EPM_target_attachment) {
+						TC_write_syslog(".1\n");
 						erc = TCTYPE_ask_object_type(attachments[i], &temp_type_t);
+						TC_write_syslog(".2\n");
 						erc = TCTYPE_ask_parent_type(temp_type_t, &parent_temp_type_t);
+						TC_write_syslog(".3\n");
 						erc = TCTYPE_is_type_of(dataset_type_t, parent_temp_type_t, &is_DatasetType);
-						erc = TCTYPE_ask_name(temp_type_t, temp_type_name);
+						TC_write_syslog(".4\n");
 						if (is_DatasetType) {
-							char* item_id;
-							int count;
-							tag_t* primary_objects;
-							erc = GRM_list_primary_objects_only(attachments[i], IMAN_specification_rel_type_t, &count, &primary_objects);
-							if (count > 0) {
-								erc = AOM_ask_value_string(primary_objects[0], "item_id", &item_id);
-								erc = AOM_refresh(attachments[i], TRUE);
-								erc = AOM_set_value_string(attachments[i], "object_name", item_id);
-								erc = AOM_save(attachments[i]);
-								erc = AOM_refresh(attachments[i], FALSE);
-								MEM_free(primary_objects);
-								if (isRenamableDatasetType(temp_type_name)) {
-									TC_write_syslog("%s %s\n", "Working with a dataset... of type ", temp_type_name);
-									int namedrefs_count = 0;
-									tag_t* namedrefs;
-									char* name;
-									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
-									//TODO
-									for (int j = 0; j < namedrefs_count; j++) {
-										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
-										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
-										if (is_ImanFileType) {
-											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-											TC_write_syslog("Found name = %s\n", name);
-											char* extension = getExtension(name);
-											char* newName;
-											if (extension != NULL) {
-												newName = (char*) MEM_alloc((strlen(item_id) + strlen(extension)) * sizeof(char) + 1);
-												strcpy(newName, item_id);
-												strcat(newName, extension);
-												MEM_free(extension);
-											} else {
-												newName = (char*) MEM_alloc(strlen(item_id) * sizeof(char) + 1);
-												strcpy(newName, item_id);
-											}
-											erc = AOM_refresh(namedrefs[j],
-											TRUE);
-											erc = IMF_set_original_file_name(namedrefs[j], newName);
-											erc = AOM_save(namedrefs[j]);
-											erc = AOM_refresh(namedrefs[j],
-											FALSE);
-											TC_write_syslog("Set name = %s\n", newName);
-											MEM_free(name);
-											MEM_free(newName);
-										}
-									}
-									//TODO
-									if (namedrefs_count > 0) {
-										MEM_free(namedrefs);
-									}
-								}
-								MEM_free(item_id);
-							}
-							erc = GRM_list_primary_objects_only(attachments[i], IMAN_Rendering_rel_type_t, &count, &primary_objects);
-							if (count > 0) {
-								erc = AOM_ask_value_string(primary_objects[0], "item_id", &item_id);
-								erc = AOM_refresh(attachments[i], TRUE);
-								erc = AOM_set_value_string(attachments[i], "object_name", item_id);
-								erc = AOM_save(attachments[i]);
-								erc = AOM_refresh(attachments[i], FALSE);
-								MEM_free(primary_objects);
-								if (isRenamableDatasetType(temp_type_s)) {
-									TC_write_syslog("%s %s\n", "Working with a dataset... of type ", temp_type_name);
-									int namedrefs_count = 0;
-									tag_t* namedrefs;
-									char* name;
-									erc = AE_ask_dataset_named_refs(attachments[i], &namedrefs_count, &namedrefs);
-									//TODO
-									for (int j = 0; j < namedrefs_count; j++) {
-//										erc = TCTYPE_ask_object_type(namedrefs[j], &temp_type_t);
-//										erc = TCTYPE_is_type_of(iman_file_type_t, temp_type_t, &is_ImanFileType);
-//										if (is_ImanFileType) {
-//											TC_write_syslog("Found\n");
-//											erc = AOM_ask_value_string(namedrefs[j], "original_file_name", &name);
-//											TC_write_syslog("Found name = %s\n", name);
-//											char* extension = getExtension(name);
-//											char* newName;
-//											if (extension != NULL) {
-//												newName = (char*) MEM_alloc((strlen(item_id) + strlen(extension)) * sizeof(char) + 1);
-//												strcpy(newName, item_id);
-//												strcat(newName, extension);
-//												MEM_free(extension);
-//											} else {
-//												newName = (char*) MEM_alloc(strlen(item_id) * sizeof(char) + 1);
-//												strcpy(newName, item_id);
-//											}
-//											erc = AOM_refresh(namedrefs[j],	TRUE);
-//											erc = IMF_set_original_file_name(namedrefs[j], newName);
-//											erc = AOM_save(namedrefs[j]);
-//											erc = AOM_refresh(namedrefs[j],	FALSE);
-//											TC_write_syslog("Set name = %s\n", newName);
-//											MEM_free(name);
-//											MEM_free(newName);
-//										}
-									}
-									//TODO
-									if (namedrefs_count > 0) {
-										MEM_free(namedrefs);
-									}
-								}
-								MEM_free(item_id);
-							}
+							TC_write_syslog(".isdataset\n");
+							renameDatasetAndNamedRefs(attachments[i], IMAN_specification_rel_type_t);
+							//renameDatasetAndNamedRefs(attachments[i], IMAN_Rendering_rel_type_t);
+						} else {
+							TC_write_syslog(".isnotdataset\n");
 						}
 					}
 				}
